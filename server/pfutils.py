@@ -35,7 +35,6 @@ def pyangle2c(x):
 angle2c = frompyfunc(pyangle2c, 1, 1)
 
 def extractOCM(pb):
-	pb = im2bw(pb).astype(int8)
 	px, py = gradient(pb)
 	pa = arctan2(py, px)
 	pa = angle2c(pa)
@@ -45,4 +44,40 @@ def extractOCM(pb):
 			if pb[i][j] == 1:
 				ocm.append((i, j, pa[i][j]))
 	return ocm
+
+# using the same radius (8) in CAO Yang's master thesis
+radius = 8
+
+__dx = [ 1,-1, 0, 0]
+__dy = [ 0, 0, 1,-1]
+
+def hitMap(pb):
+	q = {}
+	ocm = extractOCM(pb)
+
+	hmap = {}
+	for theta in range(1, 7):
+		b = zeros(pb.shape, dtype = int8)
+		q[theta] = []
+
+		for x, y, t in ocm:
+			if t == theta:
+				q[theta].append((x, y, 0))
+				b[x, y] = 1
+
+		i = 0
+		while i < len(q[theta]):
+			tx, ty, td = q[theta][i]
+			if td < radius:
+				for k in range(4):
+					x = tx + __dx[k]
+					y = ty + __dy[k]
+					if 0 <= x < pb.shape[0] and 0 <= y < pb.shape[1] and not b[x][y]:
+						b[x][y] = 1
+						q[theta].append((x, y, td + 1))
+			i += 1
+
+		hmap[theta] = b
+
+	return q, hmap
 

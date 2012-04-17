@@ -1,63 +1,17 @@
-import pickle
 import scipy as sp
 import operator
 from pylab import *
 from numpy import *
 from PIL import Image
+from time import clock
 
 from metadata import *
 from pfutils import *
 
-debugging = False
-
-# using the same radius in CAO Yang's master thesis
-radius = 3
-
-__dx = [ 1,-1, 0, 0]
-__dy = [ 0, 0, 1,-1]
-
-def hitMap(pb):
-	q = {}
-	ocm = extractOCM(pb)
-	row = range(pb.shape[0])
-	col = range(pb.shape[1])
-	debug(str(pb.shape[0] * pb.shape[1]))
-
-	for theta in range(1, 7):
-		b = zeros(pb.shape)
-		q[theta] = []
-
-		for x, y, t in ocm:
-			if t == theta:
-				q[theta].append((x, y, 0))
-				b[x, y] = 1
-
-		debug('init length: %d' % len(q[theta]))
-		i = 0
-		while i < len(q[theta]):
-			tx, ty, td = q[theta][i]
-			if td < radius:
-				for k in range(4):
-					x = tx + __dx[k]
-					y = ty + __dy[k]
-					if x in row and y in col and not b[x][y]:
-						b[x][y] = 1
-						q[theta].append((x, y, td + 1))
-			i += 1
-		debug('length: %d' % i)
-	if debugging:
-		figure()
-		gray()
-		imshow(b)
-		figure()
-		gray()
-		imshow(pb)
-		show()
-	return q
-
 def getMatch(pb):
 	debug('calculating hit map')
-	hm = hitMap(pb)
+	pb = im2bw(pb).astype(int8)
+	hm, unused = hitMap(pb)
 
 	debug('searching')
 	match = {}
@@ -78,35 +32,63 @@ def getMatch(pb):
 
 	return match, sorted_m
 
+def debug_t(msg):
+	debug('time used: %f' % (clock() - debug_t.tstamp))
+	debug(msg)
+	debug_t.tstamp = clock()
+debug_t.tstamp = clock()
+
 def test():
 	debug('loading database')
-	#with open('db.pkl', 'rb') as f:
-	#	mData = pickle.load(f)
+	# mData = MetaData()
+	# mData.load()
 
-	debug('loading mat file')
-	matname = '../data/swan/5.mat'
+	debug_t('loading mat file')
+
+	matname = '../data/teapot/22.mat'
 	data = sp.io.loadmat(matname)
 	pb = data['pb']
 
-	match, sorted_m = getMatch(pb)
-	debug('length of sorted_m: %d' % len(sorted_m))
-	for each in sorted_m(:max(len, 1000)):
-		pass
+	debug_t('one side match')
 
-	if debugging:
+	match, sorted_m = getMatch(pb)
+
+	debug_t('finish one side match')
+
+	if True:
 		name = matname[:-3] + 'jpg'
-		debug(str(sorted_m[:10]))
 		debug('origin: image %s score: %f' % (name, match[mData.name2i[name]]))
 		figure()
 		imshow(array(Image.open(name)))
-		for i in range(10):
-			name = mData.i2name[sorted_m[i][0]]
-			debug('name: %s score: %f' % (name, sorted_m[i][1]))
-			#figure()
-			#imshow(array(Image.open(name)))
-		show()
+		axis('off')
 
-	return
+	debug_t('two side match')
+
+	pb = im2bw(pb).astype(int8)
+	qocm = extractOCM(pb)
+	for ind, score1 in sorted_m[:min(len(sorted_m), 2000)]:
+		hmap = mData.i2hmap[ind]
+		score2 = 0
+		for x, y, theta in qocm:
+			if x < hmap[theta].shape[0] and y < hmap[theta].shape[1] and hmap[theta][x][y]:
+				score2 += 1
+		score2 = float(score2) / len(qocm)
+		match[ind] = sqrt(score1 * score2)
+
+	sorted_m = sorted(match.iteritems(), key = operator.itemgetter(1), reverse = True)
+
+	debug_t('finish two side match')
+
+	if True:
+		figure()
+		lenRes = 30
+		for i in range(lenRes):
+			imname = mData.i2name[sorted_m[i][0]]
+			debug('name: %s score: %f' % (imname, sorted_m[i][1]))
+			subplot(5, 6, i + 1)
+			imshow(array(Image.open(imname)))
+			axis('off')
+		show()
 
 if __name__ == '__main__':
 	test()
