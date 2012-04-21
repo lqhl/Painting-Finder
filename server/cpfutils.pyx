@@ -1,20 +1,23 @@
-from numpy import *
+import numpy as np
+cimport numpy as np
 import operator
+import math
 
 def debug(msg):
-	print 'debug_pf: ', msg
+	print 'debug_cpf: ', msg
 
-edge_threshold = 0.1
+cdef double edge_threshold = 0.1
 
-def pyim2bw(x):
+def pyim2bw(double x):
 	if x >= edge_threshold:
 		return 1
 	else:
 		return 0
 
-im2bw = frompyfunc(pyim2bw, 1, 1)
+im2bw = np.frompyfunc(pyim2bw, 1, 1)
+cdef double pi = np.pi
 
-def pyangle2c(x):
+def pyangle2c(double x):
 	if x < 0:
 		x += pi
 
@@ -33,31 +36,42 @@ def pyangle2c(x):
 
 	return x
 
-angle2c = frompyfunc(pyangle2c, 1, 1)
+angle2c = np.frompyfunc(pyangle2c, 1, 1)
 
-def extractOCM(pb):
-	px, py = gradient(pb)
-	pa = arctan2(py, px)
-	pa = angle2c(pa)
-	ocm = []
+def extractOCM(np.ndarray[np.int8_t, ndim=2] pb):
+	cdef np.ndarray[np.double_t, ndim=2] px, py
+	px, py = np.gradient(pb)
+	cdef np.ndarray[np.double_t, ndim=2] pa
+	pa = np.arctan2(py, px)
+	cdef np.ndarray[np.int8_t, ndim=2] pc
+	pc = angle2c(pa).astype(np.int8)
+	cdef list ocm = []
+	cdef int i, j
 	for i in range(pb.shape[0]):
 		for j in range(pb.shape[1]):
 			if pb[i][j] == 1:
-				ocm.append((i, j, pa[i][j]))
+				ocm.append((i, j, pc[i][j]))
 	return ocm
 
 # using the same radius (8) in CAO Yang's master thesis
-radius = 8
+cdef int radius = 8
 
-__dx = [ 1,-1, 0, 0]
-__dy = [ 0, 0, 1,-1]
+cdef list __dx = [ 1,-1, 0, 0]
+cdef list __dy = [ 0, 0, 1,-1]
 
-def hitMap(pb, ocm):
-	q = {}
+def hitMap(np.ndarray[np.int8_t, ndim=2] pb, list ocm):
+	cdef dict q = {}
 
-	hmap = {}
+	cdef dict hmap = {}
+	cdef int theta, pbs1, pbs2
+	cdef np.ndarray[np.int8_t, ndim=2] b
+	cdef int x, y, t
+	cdef int i, tx, ty, td, k
+
 	for theta in range(1, 7):
-		b = zeros(pb.shape, dtype = int8)
+		pbs1 = pb.shape[0]
+		pbs2 = pb.shape[1]
+		b = np.zeros([pbs1, pbs2], dtype = np.int8)
 		q[theta] = []
 
 		for x, y, t in ocm:
@@ -81,10 +95,13 @@ def hitMap(pb, ocm):
 
 	return q, hmap
 
-def getMatch(mData, pb, ocm):
+def getMatch(mData, np.ndarray[np.int8_t, ndim=2] pb, list ocm):
+	cdef dict hm
+	cdef dict unused
 	hm, unused = hitMap(pb, ocm)
 
-	match = {}
+	cdef dict match = {}
+	cdef int theta, x, y, d, idx
 	for theta in range(1, 7):
 		for x, y, d in hm[theta]:
 			if (x, y, theta) in mData.invIdx:
@@ -101,8 +118,12 @@ def getMatch(mData, pb, ocm):
 
 	return match, sorted_m
 
-def getMatch2(mData, qocm, sorted_m, match, topN):
-	qocm_len = len(qocm)
+def getMatch2(mData, list qocm, list sorted_m, dict match, int topN):
+	cdef int qocm_len = len(qocm)
+	cdef dict hmap
+	cdef int ind
+	cdef double score1, score2
+	cdef int x, y, theta
 	for ind, score1 in sorted_m[:min(len(sorted_m), topN)]:
 		hmap = mData.i2hmap[ind]
 		score2 = 0

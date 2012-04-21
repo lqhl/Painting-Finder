@@ -6,7 +6,7 @@ try:
 except:
 	import pickle
 
-from pfutils import *
+from cpfutils import *
 
 class MetaData:
 	def __init__(self, dbname = 'image_db'):
@@ -58,10 +58,10 @@ class MetaData:
 		pb = data['pb']
 
 		pb = im2bw(pb).astype(int8)
-		unused, hmap = hitMap(pb)
+		ocm = extractOCM(pb)
+		unused, hmap = hitMap(pb, ocm)
 		self.i2hmap[ind] = hmap
 
-		ocm = extractOCM(pb)
 		self.i2olen[ind] = len(ocm)
 		for each in ocm:
 			self.addIndex(each, ind)

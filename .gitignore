@@ -1,4 +1,8 @@
+*.so
 *.pyc
-*.jpg
 *.pkl
+*.mat
+
+*.png
+*.jpg
 data/
