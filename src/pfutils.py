@@ -57,7 +57,7 @@ def hitMap(pb, ocm):
 
 	hmap = {}
 	for theta in range(1, 7):
-		b = zeros(pb.shape, dtype = int8)
+		b = zeros(pb.shape, dtype = uint8)
 		q[theta] = []
 
 		for x, y, t in ocm:

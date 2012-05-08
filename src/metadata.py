@@ -57,7 +57,7 @@ class MetaData:
 		data = spio.loadmat(matname)
 		pb = data['pb']
 
-		pb = im2bw(pb).astype(int8)
+		pb = im2bw(pb).astype(uint8)
 		ocm = extractOCM(pb)
 		unused, hmap = hitMap(pb, ocm)
 		self.i2hmap[ind] = hmap

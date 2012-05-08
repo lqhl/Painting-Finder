@@ -38,13 +38,13 @@ def pyangle2c(double x):
 
 angle2c = np.frompyfunc(pyangle2c, 1, 1)
 
-def extractOCM(np.ndarray[np.int8_t, ndim=2] pb):
+def extractOCM(np.ndarray[np.uint8_t, ndim=2] pb):
 	cdef np.ndarray[np.double_t, ndim=2] px, py
 	px, py = np.gradient(pb)
 	cdef np.ndarray[np.double_t, ndim=2] pa
 	pa = np.arctan2(py, px)
-	cdef np.ndarray[np.int8_t, ndim=2] pc
-	pc = angle2c(pa).astype(np.int8)
+	cdef np.ndarray[np.uint8_t, ndim=2] pc
+	pc = angle2c(pa).astype(np.uint8)
 	cdef list ocm = []
 	cdef int i, j
 	for i in range(pb.shape[0]):
@@ -59,19 +59,19 @@ cdef int radius = 8
 cdef list __dx = [ 1,-1, 0, 0]
 cdef list __dy = [ 0, 0, 1,-1]
 
-def hitMap(np.ndarray[np.int8_t, ndim=2] pb, list ocm):
+def hitMap(np.ndarray[np.uint8_t, ndim=2] pb, list ocm):
 	cdef dict q = {}
 
 	cdef dict hmap = {}
 	cdef int theta, pbs1, pbs2
-	cdef np.ndarray[np.int8_t, ndim=2] b
+	cdef np.ndarray[np.uint8_t, ndim=2] b
 	cdef int x, y, t
 	cdef int i, tx, ty, td, k
 
 	for theta in range(1, 7):
 		pbs1 = pb.shape[0]
 		pbs2 = pb.shape[1]
-		b = np.zeros([pbs1, pbs2], dtype = np.int8)
+		b = np.zeros([pbs1, pbs2], dtype = np.uint8)
 		q[theta] = []
 
 		for x, y, t in ocm:
@@ -95,7 +95,7 @@ def hitMap(np.ndarray[np.int8_t, ndim=2] pb, list ocm):
 
 	return q, hmap
 
-def getMatch(mData, np.ndarray[np.int8_t, ndim=2] pb, list ocm):
+def getMatch(mData, np.ndarray[np.uint8_t, ndim=2] pb, list ocm):
 	cdef dict hm
 	cdef dict unused
 	hm, unused = hitMap(pb, ocm)
