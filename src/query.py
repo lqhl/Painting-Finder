@@ -48,7 +48,7 @@ def query(mData, pb):
 	for i in range(lenRes):
 		imnames.append(mData.i2name[sorted_m[i][0]])
 
-	if True:
+	if False:
 		figure()
 		gray()
 		imshow(pb)

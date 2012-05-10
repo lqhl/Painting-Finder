@@ -1,9 +1,10 @@
-import pygame
-from pygame.locals import *
+import sys
 import math
 import numpy as np
 from PIL import Image
-import thread
+from multiprocessing import Process
+import pygame
+from pygame.locals import *
 
 import query
 import metadata
@@ -132,6 +133,7 @@ class Menu():
 		self.brush = brush
 
 	def draw(self):
+		pygame.draw.rect(self.screen, self.colors[3], (2, 2, 80 - 2, 600 - 2), 3)
 		# draw pen style button
 		for (i, img) in enumerate(self.pens):
 			self.screen.blit(img, self.pens_rect[i].topleft)
@@ -176,6 +178,23 @@ class Menu():
 				return True
 		return False
 
+class Board():
+	def __init__(self, screen):
+		self.screen = screen
+		self.rects = [(680 + i % 2 * 100, i / 2 * 100) for i in range(12)]
+		self.imnames = None
+		self.ims = None
+
+	def update(self, imnames):
+		self.imnames = imnames
+		self.ims = [pygame.transform.scale(pygame.pygame.image.load(imname), (100, 100)) for imname in self.imnames]
+
+	def draw(self):
+		pygame.draw.rect(self.screen, (0, 0, 0), (680, 0, 200, 600), 1)
+		if self.ims is not None:
+			for i, im in enumerate(self.ims):
+				self.screen.blit(im, self.rects[i])
+
 class CImage():
 	def __init__(self, mData, size = (600, 600)):
 		self.mData = mData
@@ -188,18 +207,30 @@ class CImage():
 	def draw(self, p):
 		self.im[p[1], p[0] - 80] = 1
 
-	def save(self, imname = 'test.jpg'):
+	def convert(self, imname = 'test.jpg'):
 		t_im = Image.fromarray(255 - self.im * 255)
 		t_im.thumbnail(small_size, Image.ANTIALIAS)
 		t_im.save(imname)
 		d = (255 - np.array(t_im)) / 255.0
 		return d
 
+class Query(Process):
+	def __init__(self, mData, d):
+		Process.__init__(self)
+		self.mData = mData
+		self.d = d
+
+	def run(self):
+		self.imnames = query.query(self.mData, self.d)
+
+	def get_result(self):
+		return self.imnames
+
 class Painter():
 	def __init__(self):
 		self.mData = metadata.MetaData()
 		self.mData.load()
-		size = (680, 600)
+		size = (880, 600)
 		self.screen = pygame.display.set_mode(size)
 		pygame.display.set_caption("Painter")
 		self.clock = pygame.time.Clock()
@@ -207,6 +238,8 @@ class Painter():
 		self.brush = Brush(self.screen, self.im)
 		self.menu  = Menu(self.screen)
 		self.menu.set_brush(self.brush)
+		self.board = Board(self.screen)
+		self.process = None
 
 	def run(self):
 		self.screen.fill((255, 255, 255))
@@ -215,22 +248,24 @@ class Painter():
 			self.clock.tick(30)
 			for event in pygame.event.get():
 				if event.type == QUIT:
-					return
+					sys.exit(0)
 				elif event.type == KEYDOWN:
-					# press esc to clear screen
 					if event.key == K_ESCAPE:
+						sys.exit(0)
+					# press c to clear screen
+					elif event.key == K_c:
 						self.screen.fill((255, 255, 255))
 						self.im.clear()
 					elif event.key == K_s:
-						self.update(self.im.save())
+						self.update(self.im.convert())
 				elif event.type == MOUSEBUTTONDOWN:
 					# coarse judge here can save much time
-					if (event.pos)[0] <= 80:
+					if event.pos[0] < 80:
 						self.menu.click_button(event.pos)
-					else:
+					elif event.pos[0] < 680:
 						self.brush.start_draw(event.pos)
 				elif event.type == MOUSEMOTION:
-					if event.pos[0] <= 80:
+					if event.pos[0] < 80 or event.pos[0] >= 680:
 						self.brush.end_draw()
 					else:
 						self.brush.draw(event.pos)
@@ -238,11 +273,18 @@ class Painter():
 					self.brush.end_draw()
 
 			self.menu.draw()
+			if self.process is not None and not self.process.is_alive():
+				self.board.update(self.process.get_result())
+				self.board.draw()
+				self.process = None
 			pygame.display.update()
 
 	def update(self, d):
 		#query.query(self.mData, d)
-		thread.start_new_thread(query.query, (self.mData, d))
+		#thread.start_new_thread(query.query, (self.mData, d))
+		if self.process is None:
+			self.process = Query(self.mData, d)
+			self.process.start()
 
 if __name__ == '__main__':
 	app = Painter()
