@@ -265,7 +265,6 @@ class Painter():
 						self.brush.draw(event.pos)
 				elif event.type == MOUSEBUTTONUP or event.type == ACTIVEEVENT and event.gain == 0:
 					self.brush.end_draw()
-					self.update()
 
 			self.menu.draw()
 			try:
