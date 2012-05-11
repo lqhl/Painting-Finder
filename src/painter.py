@@ -24,7 +24,7 @@ class Brush():
 		# if style is False, png brush
 		self.style = False
 		# load brush style png
-		self.brush = pygame.image.load("brush.png").convert_alpha()
+		self.brush = pygame.image.load("../resource/brush.png").convert_alpha()
 		# set the current brush depends on size
 		self.brush_now = self.brush.subsurface((0,0), (1, 1))
 
@@ -113,8 +113,8 @@ class Menu():
 			self.colors_rect.append(rect)
 
 		self.pens = [
-				pygame.image.load("pen1.png").convert_alpha(),
-				pygame.image.load("pen2.png").convert_alpha()
+				pygame.image.load("../resource/pen1.png").convert_alpha(),
+				pygame.image.load("../resource/pen2.png").convert_alpha()
 			]
 		self.pens_rect = []
 		for (i, img) in enumerate(self.pens):
@@ -122,8 +122,8 @@ class Menu():
 			self.pens_rect.append(rect)
 
 		self.sizes = [
-				pygame.image.load("big.png").convert_alpha(),
-				pygame.image.load("small.png").convert_alpha()
+				pygame.image.load("../resource/big.png").convert_alpha(),
+				pygame.image.load("../resource/small.png").convert_alpha()
 			]
 		self.sizes_rect = []
 		for (i, img) in enumerate(self.sizes):
@@ -250,7 +250,7 @@ class Painter():
 						self.screen.fill((255, 255, 255))
 						self.im.clear()
 					elif event.key == K_s:
-						self.update(self.im.convert())
+						self.update()
 				elif event.type == MOUSEBUTTONDOWN:
 					# coarse judge here can save much time
 					if event.pos[0] < 80:
@@ -260,27 +260,29 @@ class Painter():
 				elif event.type == MOUSEMOTION:
 					if event.pos[0] < 80 or event.pos[0] >= 680:
 						self.brush.end_draw()
+						self.update()
 					else:
 						self.brush.draw(event.pos)
 				elif event.type == MOUSEBUTTONUP or event.type == ACTIVEEVENT and event.gain == 0:
 					self.brush.end_draw()
+					self.update()
 
 			self.menu.draw()
 			try:
 				self.board.update(self.queue.get_nowait())
 			except Empty:
 				pass
-			if self.process is not None and not self.process.is_alive():
-				self.process = None
 			self.board.draw()
 			pygame.display.update()
 
-	def update(self, d):
+	def update(self):
+		d = self.im.convert()
 		#query.query(self.mData, d)
 		#thread.start_new_thread(query.query, (self.mData, d))
-		if self.process is None:
-			self.process = Process(target = do_query, args = (self.mData, d, self.queue))
-			self.process.start()
+		if self.process is not None and self.process.is_alive():
+			self.process.terminate()
+		self.process = Process(target = do_query, args = (self.mData, d, self.queue))
+		self.process.start()
 
 if __name__ == '__main__':
 	app = Painter()
