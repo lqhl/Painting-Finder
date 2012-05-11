@@ -260,10 +260,12 @@ class Painter():
 				elif event.type == MOUSEMOTION:
 					if event.pos[0] < 80 or event.pos[0] >= 680:
 						self.brush.end_draw()
-						self.update()
 					else:
 						self.brush.draw(event.pos)
-				elif event.type == MOUSEBUTTONUP or event.type == ACTIVEEVENT and event.gain == 0:
+				elif event.type == MOUSEBUTTONUP:
+					self.brush.end_draw()
+					self.update()
+				elif event.type == ACTIVEEVENT and event.gain == 0:
 					self.brush.end_draw()
 
 			self.menu.draw()
