@@ -2,7 +2,8 @@ import sys
 import math
 import numpy as np
 from PIL import Image
-from multiprocessing import Process
+from multiprocessing import Process, Queue
+from Queue import Empty
 import pygame
 from pygame.locals import *
 
@@ -186,8 +187,8 @@ class Board():
 		self.ims = None
 
 	def update(self, imnames):
-		self.imnames = imnames
-		self.ims = [pygame.transform.scale(pygame.pygame.image.load(imname), (100, 100)) for imname in self.imnames]
+		self.imnames = imnames[:12]
+		self.ims = [pygame.transform.scale(pygame.image.load(imname), (100, 100)) for imname in self.imnames]
 
 	def draw(self):
 		pygame.draw.rect(self.screen, (0, 0, 0), (680, 0, 200, 600), 1)
@@ -214,17 +215,8 @@ class CImage():
 		d = (255 - np.array(t_im)) / 255.0
 		return d
 
-class Query(Process):
-	def __init__(self, mData, d):
-		Process.__init__(self)
-		self.mData = mData
-		self.d = d
-
-	def run(self):
-		self.imnames = query.query(self.mData, self.d)
-
-	def get_result(self):
-		return self.imnames
+def do_query(mData, d, queue):
+	queue.put(query.query(mData, d))
 
 class Painter():
 	def __init__(self):
@@ -240,6 +232,7 @@ class Painter():
 		self.menu.set_brush(self.brush)
 		self.board = Board(self.screen)
 		self.process = None
+		self.queue = Queue()
 
 	def run(self):
 		self.screen.fill((255, 255, 255))
@@ -273,17 +266,20 @@ class Painter():
 					self.brush.end_draw()
 
 			self.menu.draw()
+			try:
+				self.board.update(self.queue.get_nowait())
+			except Empty:
+				pass
 			if self.process is not None and not self.process.is_alive():
-				self.board.update(self.process.get_result())
-				self.board.draw()
 				self.process = None
+			self.board.draw()
 			pygame.display.update()
 
 	def update(self, d):
 		#query.query(self.mData, d)
 		#thread.start_new_thread(query.query, (self.mData, d))
 		if self.process is None:
-			self.process = Query(self.mData, d)
+			self.process = Process(target = do_query, args = (self.mData, d, self.queue))
 			self.process.start()
 
 if __name__ == '__main__':

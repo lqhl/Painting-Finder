@@ -4,7 +4,7 @@ from metadata import MetaData
 
 data_dir = '../data/'
 
-mData = MetaData('image_db')
+mData = MetaData()
 for each in os.walk(data_dir):
 	dirname, dirs, files = each
 	if not files:
