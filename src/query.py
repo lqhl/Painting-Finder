@@ -4,11 +4,13 @@ from pylab import *
 from numpy import *
 from PIL import Image
 from time import clock
+import cProfile as profile
 
 from metadata import *
-from cpfutils import *
-
-import cProfile as profile
+try:
+	from cpfutils import *
+except:
+	from pfutils import *
 
 def debug_t(msg):
 	debug('time used: %f' % (clock() - debug_t.tstamp))

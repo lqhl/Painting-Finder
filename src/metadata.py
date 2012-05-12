@@ -6,7 +6,10 @@ try:
 except:
 	import pickle
 
-from cpfutils import *
+try:
+	from cpfutils import *
+except:
+	from pfutils import *
 
 class MetaData:
 	def __init__(self, dbname = 'image_db'):
