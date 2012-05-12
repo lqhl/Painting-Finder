@@ -2,10 +2,15 @@ import sys
 import math
 import numpy as np
 from PIL import Image
-from multiprocessing import Process, Queue
-from Queue import Empty
 import pygame
 from pygame.locals import *
+isLinux = sys.platform.startswith('linux')
+if isLinux:
+	from multiprocessing import Process, Queue
+	from Queue import Empty
+else:
+	from threading import Thread as Process
+	from Queue import Queue, Empty
 
 import query
 import metadata
@@ -35,7 +40,9 @@ class Brush():
 		self.draw_point(pos)
 		self.last_pos = pos
 	def end_draw(self):
+		res = self.drawing
 		self.drawing = False
+		return res
 
 	def set_brush_style(self, style):
 		print "* set brush style to", style
@@ -191,10 +198,12 @@ class Board():
 		self.ims = [pygame.transform.scale(pygame.image.load(imname), (100, 100)) for imname in self.imnames]
 
 	def draw(self):
-		pygame.draw.rect(self.screen, (0, 0, 0), (680, 0, 200, 600), 1)
 		if self.ims is not None:
 			for i, im in enumerate(self.ims):
 				self.screen.blit(im, self.rects[i])
+			for i in range(len(self.ims), 12):
+				self.screen.fill((255, 255, 255), (self.rects[i][0], self.rects[i][1], 100, 100))
+		pygame.draw.rect(self.screen, (0, 0, 0), (680, 0, 200, 600), 1)
 
 class CImage():
 	def __init__(self, mData, size = (600, 600)):
@@ -243,7 +252,7 @@ class Painter():
 				if event.type == QUIT:
 					sys.exit(0)
 				elif event.type == KEYDOWN:
-					if event.key == K_ESCAPE:
+					if event.key == K_ESCAPE or event.key == K_q:
 						sys.exit(0)
 					# press c to clear screen
 					elif event.key == K_c:
@@ -263,8 +272,8 @@ class Painter():
 					else:
 						self.brush.draw(event.pos)
 				elif event.type == MOUSEBUTTONUP:
-					self.brush.end_draw()
-					self.update()
+					if self.brush.end_draw():
+						self.update()
 				elif event.type == ACTIVEEVENT and event.gain == 0:
 					self.brush.end_draw()
 
@@ -278,9 +287,7 @@ class Painter():
 
 	def update(self):
 		d = self.im.convert()
-		#query.query(self.mData, d)
-		#thread.start_new_thread(query.query, (self.mData, d))
-		if self.process is not None and self.process.is_alive():
+		if isLinux and self.process is not None and self.process.is_alive():
 			self.process.terminate()
 		self.process = Process(target = do_query, args = (self.mData, d, self.queue))
 		self.process.start()

@@ -47,7 +47,7 @@ def query(mData, pb):
 
 	lenRes = 30
 	imnames = []
-	for i in range(lenRes):
+	for i in range(min(lenRes, len(sorted_m))):
 		imnames.append(mData.i2name[sorted_m[i][0]])
 
 	if False:
