@@ -25,12 +25,28 @@ def test():
 
 	debug_t('loading mat file')
 
-	matname = '../data/gun/1.mat'
-	# matname = 'butterfly.mat'
-	data = sp.io.loadmat(matname)
-	pb = data['pb']
+	# matname = '../data/gun/1.mat'
+	# data = sp.io.loadmat(matname)
+	# pb = data['pb']
 
-	query(mData, pb)
+	pb = (255 - array(Image.open('test.jpg'))) / 255.0
+
+	imnames = query(mData, pb)
+
+	if True:
+		figure()
+		subplot(5, 6, 1)
+		gray()
+		imshow(pb)
+		axis('off')
+
+		# figure()
+		for i, imname in enumerate(imnames[:29]):
+			subplot(5, 6, i + 2)
+			imshow(array(Image.open(imname)))
+			axis('off')
+		show()
+
 
 def query(mData, pb):
 	debug_t('one side match')
@@ -41,29 +57,16 @@ def query(mData, pb):
 
 	debug_t('two side match')
 
-	sorted_m = getMatch2(mData, qocm, sorted_m, match, 200)
+	sorted_m = getMatch2(mData, qocm, sorted_m, match, 500)
 
 	debug_t('finish two side match')
 
 	lenRes = 30
 	imnames = []
 	for i in range(min(lenRes, len(sorted_m))):
-		imnames.append(mData.i2name[sorted_m[i][0]])
-
-	if False:
-		figure()
-		gray()
-		imshow(pb)
-		axis('off')
-
-		figure()
-		for i in range(lenRes):
-			imname = mData.i2name[sorted_m[i][0]]
-			debug('name: %s score: %f' % (imname, sorted_m[i][1]))
-			subplot(5, 6, i + 1)
-			imshow(array(Image.open(imname)))
-			axis('off')
-		show()
+		imname = mData.i2name[sorted_m[i][0]]
+		imnames.append(imname)
+		debug('name: %s, score: %f' % (imname, sorted_m[i][1]))
 
 	return imnames
 

@@ -96,6 +96,7 @@ def getMatch(mData, pb, ocm):
 
 	for idx in match:
 		match[idx] = float(match[idx]) / mData.i2olen[idx]
+		#match[idx] = float(match[idx]) / math.sqrt(mData.i2olen[idx])
 
 	sorted_m = sorted(match.iteritems(), key = operator.itemgetter(1), reverse = True)
 
@@ -111,6 +112,7 @@ def getMatch2(mData, qocm, sorted_m, match, topN):
 				score2 += 1
 		score2 = float(score2) / qocm_len
 		match[ind] = math.sqrt(score1 * score2)
+		#match[ind] = math.sqrt(score1 / math.sqrt(mData.i2olen[ind]) * score2)
 
 	sorted_m = sorted(match.iteritems(), key = operator.itemgetter(1), reverse = True)
 

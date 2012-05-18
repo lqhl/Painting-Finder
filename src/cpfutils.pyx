@@ -113,6 +113,7 @@ def getMatch(mData, np.ndarray[np.uint8_t, ndim=2] pb, list ocm):
 
 	for idx in match:
 		match[idx] = float(match[idx]) / mData.i2olen[idx]
+		#match[idx] = float(match[idx]) / math.sqrt(mData.i2olen[idx])
 
 	sorted_m = sorted(match.iteritems(), key = operator.itemgetter(1), reverse = True)
 
@@ -132,6 +133,7 @@ def getMatch2(mData, list qocm, list sorted_m, dict match, int topN):
 				score2 += 1
 		score2 = float(score2) / qocm_len
 		match[ind] = math.sqrt(score1 * score2)
+		#match[ind] = math.sqrt(score1 / math.sqrt(mData.i2olen[ind]) * score2)
 
 	sorted_m = sorted(match.iteritems(), key = operator.itemgetter(1), reverse = True)
 
