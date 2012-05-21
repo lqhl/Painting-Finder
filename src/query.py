@@ -74,7 +74,46 @@ def test2():
 			axis('off')
 	savefig('6-result.eps')
 
-def query(mData, pb):
+def test_topN():
+	debug('loading database')
+	mData = MetaData()
+	mData.load()
+
+	res = []
+	dp = '../data'
+	fnames = os.listdir(dp)
+	fnames = ['folding fan', 'dragonfly', 'letter a', 'daisy', 'gun', 'bag', 'desk lamp', 'eiffel tower', 'teapot', 'apple', 'golden gate', 'stapler', 'horse', 'temple of heaven', 'watch', 'starfish', 'smiley face']
+	topNs = [10, 20, 40, 60, 80, 100, 160, 200, 500]
+	ans = []
+	for topN in topNs:
+		for fname in fnames:
+			if not os.path.isdir(os.path.join(dp, fname)) or fname.startswith('2'):
+				continue
+			debug_t('calc %s' % fname)
+			matname = os.path.join(dp, fname, '1.mat')
+			data = sp.io.loadmat(matname)
+			pb = data['pb']
+			pb = normalize(pb)
+
+			imnames = query(mData, pb, topN)[:10]
+			hits = 0
+			for imname in imnames:
+				if imname.startswith(os.path.join(dp, fname)):
+					hits += 1
+			res.append((fname, float(hits) / len(imnames)))
+		with open('top%d.txt' % topN, 'w') as fo:
+			for each in res:
+				fo.write('%s: %f\n' % each)
+			tmp = map(lambda x : x[1], res)
+			avg = sum(tmp) / len(tmp)
+			fo.write('average: %f\n' % avg)
+			ans.append(avg)
+	print topNs
+	print ans
+	#plot(topN, ans)
+	#savefig('topN.eps')
+
+def query(mData, pb, topN = 200):
 	debug_t('one side match')
 
 	pb = im2bw(pb).astype(uint8)
@@ -83,7 +122,7 @@ def query(mData, pb):
 
 	debug_t('two side match')
 
-	#sorted_m = getMatch2(mData, qocm, sorted_m, match, 200)
+	sorted_m = getMatch2(mData, qocm, sorted_m, match, topN)
 
 	debug_t('finish two side match')
 
@@ -97,5 +136,5 @@ def query(mData, pb):
 	return imnames
 
 if __name__ == '__main__':
-	test()
+	test_topN()
 	# profile.run('test()')
