@@ -3,5 +3,6 @@
 *.pkl
 *.mat
 
-test.jpg
+*.jpg
+*.eps
 data/

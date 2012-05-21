@@ -25,28 +25,54 @@ def test():
 
 	debug_t('loading mat file')
 
-	# matname = '../data/gun/1.mat'
-	# data = sp.io.loadmat(matname)
-	# pb = data['pb']
+	fnames = ['test%d.jpg' % i for i in range(1, 7)]
+	figure(figsize = (30, 18))
+	for i, fname in enumerate(fnames):
+		pb = (255 - array(Image.open(fname))) / 255.0
 
-	pb = (255 - array(Image.open('test.jpg'))) / 255.0
+		imnames = query(mData, pb)
 
-	imnames = query(mData, pb)
-
-	if True:
-		figure()
-		subplot(5, 6, 1)
+		subplot(6, 10, i * 10 + 1)
 		gray()
 		imshow(pb)
 		axis('off')
 
 		# figure()
-		for i, imname in enumerate(imnames[:29]):
-			subplot(5, 6, i + 2)
+		for j, imname in enumerate(imnames[:9]):
+			subplot(6, 10, i * 10 + 2 + j)
 			imshow(array(Image.open(imname)))
 			axis('off')
-		show()
+	savefig('6-result.eps')
 
+def test2():
+	debug('loading database')
+	mData = MetaData()
+	mData.load()
+
+	debug_t('loading mat file')
+
+
+	fnames = ['apple', 'pisa tower', 'eiffel tower', 'golden gate', 'butterfly', 'teapot']
+	figure(figsize = (30, 18))
+	for i, fname in enumerate(fnames):
+		matname = '../data/%s/3.mat' % fname
+		data = sp.io.loadmat(matname)
+		pb = data['pb']
+		pb = normalize(pb)
+
+		imnames = query(mData, pb)
+
+		subplot(6, 10, i * 10 + 1)
+		gray()
+		imshow(pb)
+		axis('off')
+
+		# figure()
+		for j, imname in enumerate(imnames[:9]):
+			subplot(6, 10, i * 10 + 2 + j)
+			imshow(array(Image.open(imname)))
+			axis('off')
+	savefig('6-result.eps')
 
 def query(mData, pb):
 	debug_t('one side match')
@@ -57,7 +83,7 @@ def query(mData, pb):
 
 	debug_t('two side match')
 
-	sorted_m = getMatch2(mData, qocm, sorted_m, match, 500)
+	#sorted_m = getMatch2(mData, qocm, sorted_m, match, 200)
 
 	debug_t('finish two side match')
 

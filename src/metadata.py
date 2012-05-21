@@ -59,18 +59,7 @@ class MetaData:
 
 		data = spio.loadmat(matname)
 		pb = data['pb']
-		if pb.shape[0] != 200:
-			l = (200 - pb.shape[0]) / 2
-			r = 200 - pb.shape[0] - l
-			lpb = zeros((l, 200))
-			rpb = zeros((r, 200))
-			pb = concatenate((lpb, pb, rpb))
-		elif pb.shape[1] != 200:
-			l = (200 - pb.shape[1]) / 2
-			r = 200 - pb.shape[1] - l
-			lpb = zeros((200, l))
-			rpb = zeros((200, r))
-			pb = concatenate((lpb, pb, rpb), 1)
+		pb = normalize(pb)
 		assert pb.shape == (200, 200)
 
 		pb = im2bw(pb).astype(uint8)

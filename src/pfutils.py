@@ -118,3 +118,18 @@ def getMatch2(mData, qocm, sorted_m, match, topN):
 
 	return sorted_m
 
+def normalize(pb):
+	if pb.shape[0] != 200:
+		l = (200 - pb.shape[0]) / 2
+		r = 200 - pb.shape[0] - l
+		lpb = np.zeros((l, 200))
+		rpb = np.zeros((r, 200))
+		pb = np.concatenate((lpb, pb, rpb))
+	elif pb.shape[1] != 200:
+		l = (200 - pb.shape[1]) / 2
+		r = 200 - pb.shape[1] - l
+		lpb = np.zeros((200, l))
+		rpb = np.zeros((200, r))
+		pb = np.concatenate((lpb, pb, rpb), 1)
+
+	return pb

@@ -210,6 +210,7 @@ class CImage():
 		self.mData = mData
 		self.size = size
 		self.im = np.zeros(self.size, dtype = np.uint8)
+		self.i = 0
 
 	def clear(self):
 		self.im = np.zeros(self.size, dtype = np.uint8)
@@ -217,12 +218,19 @@ class CImage():
 	def draw(self, p):
 		self.im[p[1], p[0] - 80] = 1
 
-	def convert(self, imname = 'test.jpg'):
+	def convert(self):
+		t_im = Image.fromarray(255 - self.im * 255)
+		t_im.thumbnail(small_size, Image.ANTIALIAS)
+		d = (255 - np.array(t_im)) / 255.0
+		return d
+
+	def save(self, imname = None):
+		if imname is None:
+			self.i += 1
+			imname = 'test%d.jpg' % self.i
 		t_im = Image.fromarray(255 - self.im * 255)
 		t_im.thumbnail(small_size, Image.ANTIALIAS)
 		t_im.save(imname)
-		d = (255 - np.array(t_im)) / 255.0
-		return d
 
 def do_query(mData, d, queue):
 	queue.put(query.query(mData, d))
@@ -259,7 +267,7 @@ class Painter():
 						self.screen.fill((255, 255, 255))
 						self.im.clear()
 					elif event.key == K_s:
-						self.update()
+						self.im.save()
 				elif event.type == MOUSEBUTTONDOWN:
 					# coarse judge here can save much time
 					if event.pos[0] < 80:
