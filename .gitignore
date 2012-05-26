@@ -2,7 +2,8 @@
 *.pyc
 *.pkl
 *.mat
-
 *.jpg
 *.eps
+
 data/
+test/
