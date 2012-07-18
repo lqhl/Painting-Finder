@@ -2,8 +2,7 @@
 *.pyc
 *.pkl
 *.mat
-*.jpg
 *.eps
+*.db
 
-data/
 test/
